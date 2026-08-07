@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const contact_controller_1 = require("../controllers/contact.controller");
+const contact_service_1 = require("../services/contact.service");
+const contact_repository_1 = require("../repositories/contact.repository");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const contactRepo = new contact_repository_1.ContactRepository();
+const contactService = new contact_service_1.ContactService(contactRepo);
+const contactController = new contact_controller_1.ContactController(contactService);
+const router = (0, express_1.Router)();
+router.post('/', contactController.send);
+router.get('/', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), contactController.getAllMessages);
+router.get('/stats', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), contactController.getStats);
+router.patch('/:id/status', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), contactController.updateStatus);
+router.delete('/:id', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), contactController.deleteMessage);
+exports.default = router;

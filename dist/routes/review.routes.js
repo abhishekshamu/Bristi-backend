@@ -1,0 +1,27 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const review_controller_1 = require("../controllers/review.controller");
+const review_service_1 = require("../services/review.service");
+const review_repository_1 = require("../repositories/review.repository");
+const product_repository_1 = require("../repositories/product.repository");
+const user_repository_1 = require("../repositories/user.repository");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const audit_middleware_1 = require("../middleware/audit.middleware");
+const review_validators_1 = require("../validators/review.validators");
+const index_1 = require("../validators/index");
+const reviewRepo = new review_repository_1.ReviewRepository();
+const productRepo = new product_repository_1.ProductRepository();
+const userRepo = new user_repository_1.UserRepository();
+const reviewService = new review_service_1.ReviewService(reviewRepo, productRepo, userRepo);
+const reviewController = new review_controller_1.ReviewController(reviewService);
+const router = (0, express_1.Router)();
+router.get('/featured', reviewController.getFeaturedReviews);
+router.get('/product/:productId', reviewController.getProductReviews);
+router.post('/', auth_middleware_1.protect, review_validators_1.createReviewValidation, index_1.validate, reviewController.createReview);
+router.put('/:reviewId', auth_middleware_1.protect, review_validators_1.updateReviewValidation, index_1.validate, reviewController.updateReview);
+router.delete('/:reviewId', auth_middleware_1.protect, review_validators_1.deleteReviewValidation, index_1.validate, reviewController.deleteReview);
+// Admin moderation
+router.get('/', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), reviewController.listReviews);
+router.patch('/:reviewId/status', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), (0, audit_middleware_1.auditLog)('review', 'update'), review_validators_1.updateReviewStatusValidation, index_1.validate, reviewController.updateReviewStatus);
+exports.default = router;

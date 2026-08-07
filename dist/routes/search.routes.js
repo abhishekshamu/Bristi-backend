@@ -1,0 +1,23 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const search_service_1 = require("../services/search.service");
+const product_repository_1 = require("../repositories/product.repository");
+const category_repository_1 = require("../repositories/category.repository");
+const collection_repository_1 = require("../repositories/collection.repository");
+const blog_repository_1 = require("../repositories/blog.repository");
+const page_repository_1 = require("../repositories/page.repository");
+const order_repository_1 = require("../repositories/order.repository");
+const user_repository_1 = require("../repositories/user.repository");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const async_1 = require("../middleware/async");
+const searchService = new search_service_1.SearchService(new product_repository_1.ProductRepository(), new category_repository_1.CategoryRepository(), new collection_repository_1.CollectionRepository(), new blog_repository_1.BlogRepository(), new page_repository_1.PageRepository(), new order_repository_1.OrderRepository(), new user_repository_1.UserRepository());
+const router = (0, express_1.Router)();
+router.get('/', auth_middleware_1.optionalAuth, (0, async_1.asyncHandler)(async (req, res) => {
+    const q = (req.query.q || '').toString();
+    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+    const isAdmin = !!(req.user && (req.user.role === 'admin' || req.user.role === 'super_admin'));
+    const results = await searchService.globalSearch(q, { limit, includeAdmin: isAdmin });
+    res.status(200).json({ success: true, data: results });
+}));
+exports.default = router;

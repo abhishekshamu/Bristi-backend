@@ -1,0 +1,56 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.promotionBannerIdValidation = exports.updatePromotionBannerValidation = exports.createPromotionBannerValidation = void 0;
+const express_validator_1 = require("express-validator");
+exports.createPromotionBannerValidation = [
+    (0, express_validator_1.body)('name').notEmpty().withMessage('Banner name is required').trim(),
+    (0, express_validator_1.body)('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+    (0, express_validator_1.body)('scope').optional().isIn(['all', 'selected']).withMessage('Scope must be all or selected'),
+    (0, express_validator_1.body)('categorySlugs').optional().isArray().withMessage('categorySlugs must be an array'),
+    (0, express_validator_1.body)('categorySlugs.*').optional().isString().trim(),
+    (0, express_validator_1.body)('desktopImage').optional().isString().trim(),
+    (0, express_validator_1.body)('tabletImage').optional().isString().trim(),
+    (0, express_validator_1.body)('mobileImage').optional().isString().trim(),
+    (0, express_validator_1.body)('redirectUrl').optional().isString().trim(),
+    (0, express_validator_1.body)('openInNewTab').optional().isBoolean().withMessage('openInNewTab must be a boolean'),
+    (0, express_validator_1.body)('startDate').optional().isISO8601().withMessage('Invalid start date'),
+    (0, express_validator_1.body)('endDate').optional().isISO8601().withMessage('Invalid end date'),
+    (0, express_validator_1.body)('backgroundColor').optional().isString().trim(),
+    (0, express_validator_1.body)('borderColor').optional().isString().trim(),
+    (0, express_validator_1.body)('borderWidth').optional().isInt({ min: 0 }).withMessage('borderWidth must be a non-negative integer'),
+    (0, express_validator_1.body)('borderRadius').optional().isInt({ min: 0 }).withMessage('borderRadius must be a non-negative integer'),
+    (0, express_validator_1.body)('padding').optional().isInt({ min: 0 }).withMessage('padding must be a non-negative integer'),
+    (0, express_validator_1.body)('marginTop').optional().isInt({ min: 0 }).withMessage('marginTop must be a non-negative integer'),
+    (0, express_validator_1.body)('marginBottom').optional().isInt({ min: 0 }).withMessage('marginBottom must be a non-negative integer'),
+    (0, express_validator_1.body)('overlayColor').optional().isString().trim(),
+    (0, express_validator_1.body)('overlayOpacity').optional().isInt({ min: 0, max: 100 }).withMessage('overlayOpacity must be between 0 and 100'),
+    (0, express_validator_1.body)('bannerOrder').optional().isInt({ min: 0 }).withMessage('bannerOrder must be a non-negative integer'),
+];
+exports.updatePromotionBannerValidation = [
+    (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid banner ID'),
+    (0, express_validator_1.body)('name').optional().trim(),
+    (0, express_validator_1.body)('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+    (0, express_validator_1.body)('scope').optional().isIn(['all', 'selected']).withMessage('Scope must be all or selected'),
+    (0, express_validator_1.body)('categorySlugs').optional().isArray().withMessage('categorySlugs must be an array'),
+    (0, express_validator_1.body)('categorySlugs.*').optional().isString().trim(),
+    (0, express_validator_1.body)('desktopImage').optional().isString().trim(),
+    (0, express_validator_1.body)('tabletImage').optional().isString().trim(),
+    (0, express_validator_1.body)('mobileImage').optional().isString().trim(),
+    (0, express_validator_1.body)('redirectUrl').optional().isString().trim(),
+    (0, express_validator_1.body)('openInNewTab').optional().isBoolean().withMessage('openInNewTab must be a boolean'),
+    (0, express_validator_1.body)('startDate').optional().isISO8601().withMessage('Invalid start date'),
+    (0, express_validator_1.body)('endDate').optional().isISO8601().withMessage('Invalid end date'),
+    (0, express_validator_1.body)('backgroundColor').optional().isString().trim(),
+    (0, express_validator_1.body)('borderColor').optional().isString().trim(),
+    (0, express_validator_1.body)('borderWidth').optional().isInt({ min: 0 }).withMessage('borderWidth must be a non-negative integer'),
+    (0, express_validator_1.body)('borderRadius').optional().isInt({ min: 0 }).withMessage('borderRadius must be a non-negative integer'),
+    (0, express_validator_1.body)('padding').optional().isInt({ min: 0 }).withMessage('padding must be a non-negative integer'),
+    (0, express_validator_1.body)('marginTop').optional().isInt({ min: 0 }).withMessage('marginTop must be a non-negative integer'),
+    (0, express_validator_1.body)('marginBottom').optional().isInt({ min: 0 }).withMessage('marginBottom must be a non-negative integer'),
+    (0, express_validator_1.body)('overlayColor').optional().isString().trim(),
+    (0, express_validator_1.body)('overlayOpacity').optional().isInt({ min: 0, max: 100 }).withMessage('overlayOpacity must be between 0 and 100'),
+    (0, express_validator_1.body)('bannerOrder').optional().isInt({ min: 0 }).withMessage('bannerOrder must be a non-negative integer'),
+];
+exports.promotionBannerIdValidation = [
+    (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid banner ID'),
+];
