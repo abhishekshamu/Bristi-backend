@@ -4,9 +4,8 @@ exports.AdminController = void 0;
 const async_1 = require("../middleware/async");
 const cookies_1 = require("../config/cookies");
 class AdminController {
-    constructor(adminService, userService, userRepo, productRepo, orderRepo, authRepo, authService) {
+    constructor(adminService, userRepo, productRepo, orderRepo, authRepo, authService) {
         this.adminService = adminService;
-        this.userService = userService;
         this.userRepo = userRepo;
         this.productRepo = productRepo;
         this.orderRepo = orderRepo;

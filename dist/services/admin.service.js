@@ -8,10 +8,9 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const exceptions_1 = require("../utils/exceptions");
 const constants_1 = require("shared/constants");
 class AdminService {
-    constructor(adminRepo, jwtService, emailService, authRepo) {
+    constructor(adminRepo, jwtService, authRepo) {
         this.adminRepo = adminRepo;
         this.jwtService = jwtService;
-        this.emailService = emailService;
         this.authRepo = authRepo;
     }
     async login(email, password) {

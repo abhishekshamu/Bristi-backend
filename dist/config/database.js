@@ -6,8 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.stopMemoryMongo = exports.getMongoUri = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const mongodb_memory_server_1 = require("mongodb-memory-server");
-const mongodb_memory_server_2 = require("mongodb-memory-server");
 const node_dns_1 = __importDefault(require("node:dns"));
 dotenv_1.default.config();
 const RESOLVER_SETS = [
@@ -29,12 +27,15 @@ const refuseInMemoryInProduction = () => {
 const startMemoryMongo = async () => {
     refuseInMemoryInProduction();
     console.log('MONGODB_URI not set — starting in-memory MongoDB (development fallback)');
+    // mongodb-memory-server is a dev-only dependency: it is loaded lazily here so
+    // production never requires it (production either has MONGODB_URI or exits).
+    const { MongoMemoryServer, MongoMemoryReplSet } = await import('mongodb-memory-server');
     // MEMORY_REPLSET=1 starts a single-node replica set so transactional code
     // (e.g. order placement) works against the in-memory database.
     if (process.env.MEMORY_REPLSET === '1') {
-        return mongodb_memory_server_2.MongoMemoryReplSet.create({ replSet: { count: 1 } });
+        return MongoMemoryReplSet.create({ replSet: { count: 1 } });
     }
-    return mongodb_memory_server_1.MongoMemoryServer.create();
+    return MongoMemoryServer.create();
 };
 const getMongoUri = async () => {
     const configured = process.env.MONGODB_URI?.trim();
