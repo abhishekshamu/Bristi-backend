@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { csrfProtection } from './middleware/csrf.middleware';
+import { getCookieConfig } from './config/cookies';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import productRoutes from './routes/product.routes';
@@ -47,18 +48,15 @@ const app: Express = express();
 // Keeps rate limiting and req.ip correct in proxied deployments.
 app.set('trust proxy', process.env.TRUST_PROXY === 'true' ? 1 : false);
 
-// Middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Allowed origins are the production storefront(s) plus a comma-separated
-// allow-list via FRONTEND_URL (e.g. a custom domain or the admin panel), plus
-// local development origins so a local storefront/admin can talk to a deployed
-// API. No wildcard is used in any environment.
+// Allowed origins are the production storefront/admin panels plus a
+// comma-separated allow-list via FRONTEND_URL (e.g. a custom domain), plus
+// local development origins. No wildcard is used in any environment.
 const PROD_ALLOWED_ORIGINS = [
   // Production storefront (Vercel). Always allowed so a fresh deploy works
   // even before FRONTEND_URL is configured on the host.
   'https://bristi-frontend.vercel.app',
+  // Production admin panel (Vercel).
+  'https://bristi-admin.vercel.app',
 ];
 
 const DEV_ALLOWED_ORIGINS = [
@@ -68,26 +66,56 @@ const DEV_ALLOWED_ORIGINS = [
   'http://127.0.0.1:3004', 'http://127.0.0.1:3005', 'http://127.0.0.1:5173', 'http://127.0.0.1:4173',
 ];
 
-const allowedOrigins = [
-  ...PROD_ALLOWED_ORIGINS,
+const allowedOrigins = Array.from(new Set([
   ...(process.env.FRONTEND_URL || '')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean),
   ...DEV_ALLOWED_ORIGINS,
-];
+]));
 
+// Identity of the build currently running. Render injects RENDER_GIT_COMMIT /
+// RENDER_GIT_BRANCH at runtime, so every response can expose the exact
+// deployed commit — making stale deployments directly observable.
+const DEPLOY_COMMIT =
+  process.env.RENDER_GIT_COMMIT ||
+  process.env.COMMIT_SHA ||
+  'unknown';
+const DEPLOY_BRANCH =
+  process.env.RENDER_GIT_BRANCH ||
+  process.env.GIT_BRANCH ||
+  'unknown';
+
+// Diagnostics (production-safe: method, path, origin, decision — never
+// passwords, cookies, tokens or bodies) + deploy-identity header. This runs
+// FIRST, before CORS, so the header and log line exist on every response.
+app.use((req, res, next) => {
+  res.setHeader('X-Bristi-Commit', DEPLOY_COMMIT);
+  console.log(
+    `[req] ${req.method} ${req.originalUrl} origin=${req.headers.origin || 'none'}`
+  );
+  next();
+});
+
+// CORS is registered BEFORE every other middleware (body parsers, routes,
+// authentication, error handling) so OPTIONS preflights and all responses —
+// including 4xx/5xx — always carry the CORS headers for allowed origins.
 app.use(cors({
   origin(origin, callback) {
     // Requests without an Origin header (curl, server-to-server, health checks)
     // and same-origin requests are always allowed. Disallowed origins are
     // denied cleanly (no Access-Control-Allow-Origin header) — the browser
     // blocks the request with a CORS error instead of a 500.
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(null, false);
   },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-XSRF-TOKEN'],
   credentials: true,
 }));
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 app.use(helmet({
   // The storefront and admin run on different origins/ports and embed
   // images served from this API (/uploads). Helmet's default
@@ -191,6 +219,28 @@ app.get('/health', (req: Request, res: Response) => {
     status: 'OK',
     timestamp: new Date().toISOString(),
     service: 'BRISTI API'
+  });
+});
+
+// Public deployment-identity endpoint: proves which commit/allow-list/cookie
+// config the running build has. No secrets (no keys, tokens or cookies).
+app.get('/api/deploy-info', (req: Request, res: Response) => {
+  res.status(200).json({
+    service: 'BRISTI API',
+    commit: DEPLOY_COMMIT,
+    branch: DEPLOY_BRANCH,
+    nodeEnv: process.env.NODE_ENV || 'not set',
+    cors: {
+      allowedOrigins,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-XSRF-TOKEN'],
+    },
+    cookies: {
+      ...getCookieConfig(),
+      path: '/',
+    },
+    timestamp: new Date().toISOString(),
   });
 });
 
