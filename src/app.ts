@@ -67,6 +67,7 @@ const DEV_ALLOWED_ORIGINS = [
 ];
 
 const allowedOrigins = Array.from(new Set([
+  ...PROD_ALLOWED_ORIGINS,
   ...(process.env.FRONTEND_URL || '')
     .split(',')
     .map((o) => o.trim())
@@ -106,6 +107,13 @@ app.use(cors({
     // and same-origin requests are always allowed. Disallowed origins are
     // denied cleanly (no Access-Control-Allow-Origin header) — the browser
     // blocks the request with a CORS error instead of a 500.
+    if (!origin) {
+      console.log(`[cors-decision] no-origin -> allowed`);
+      return callback(null, true);
+    }
+    const allowed = allowedOrigins.includes(origin);
+    console.log(`[cors-decision] origin=${origin} -> ${allowed ? 'allowed' : 'DENIED'}`);
+    return callback(null, allowed);
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-XSRF-TOKEN'],
